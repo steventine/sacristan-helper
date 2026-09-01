@@ -125,10 +125,16 @@ const addDays = (iso, n) => { const d = toUTC(iso); d.setUTCDate(d.getUTCDate() 
 const dow = (iso) => toUTC(iso).getUTCDay();
 const pretty = (iso) => LONG.format(toUTC(iso));
 
-// The Sunday whose Mass has just ended: today when it is Sunday, else the one coming up.
+// The Sunday whose setup is current. On Monday that is still yesterday's
+// Sunday, because the books set after Sunday Mass are the ones in use today --
+// flipping at Sunday midnight would show next week's readings to anyone
+// checking on Monday that the books were set correctly.
 function currentSetupSunday() {
   const t = todayISO();
-  return dow(t) === 0 ? t : addDays(t, (7 - dow(t)) % 7);
+  const d = dow(t);
+  if (d === 0) return t;               // Sunday: today
+  if (d === 1) return addDays(t, -1);  // Monday: the setup now in use
+  return addDays(t, (7 - d) % 7);      // Tue-Sat: the Sunday coming up
 }
 
 let DATA = null;
