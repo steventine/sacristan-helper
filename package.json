@@ -7,7 +7,8 @@
     "lectionary": "node scripts/build-lectionary.mjs",
     "generate": "node scripts/generate.mjs",
     "verify": "node scripts/verify.mjs",
-    "build": "npm run lectionary && npm run generate && npm run verify"
+    "build": "npm run generate && npm run verify",
+    "fetch-source": "node scripts/fetch-source.mjs"
   },
   "keywords": [],
   "author": "",

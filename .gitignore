@@ -23,7 +23,12 @@ desktop.ini
 # Local Claude Code overrides (.claude/launch.json is shared on purpose)
 .claude/settings.local.json
 
+# Upstream lectionary tables. Not redistributed - the repo keeps only the
+# derived citations and Lectionary numbers in data/lectionary.json.
+# Re-download with `npm run fetch-source` when rebuilding that table.
+data/source/
+
 # NOTE: data/lectionary.json and public/readings.json are build outputs but are
-# deliberately committed. public/ is the deployable artifact, so keeping them in
-# the repo means `wrangler pages deploy public` works on a fresh clone with no
-# build step. Regenerate them with `npm run build`.
+# deliberately committed. data/lectionary.json is what `npm run build` reads, so
+# committing it keeps CI free of any network dependency; public/readings.json
+# means the site is servable straight from a clone. Regenerate with `npm run build`.

@@ -7,8 +7,10 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import Romcal from 'romcal';
 
+// A rolling twenty-year window from the current year, so every rebuild extends
+// the range on its own and the data never quietly runs out.
 const FIRST_YEAR = Number(process.env.FIRST_YEAR) || new Date().getFullYear();
-const LAST_YEAR = Number(process.env.LAST_YEAR) || FIRST_YEAR + 5;
+const LAST_YEAR = Number(process.env.LAST_YEAR) || FIRST_YEAR + 19;
 const ASCENSION_ON_SUNDAY = process.env.ASCENSION_ON_SUNDAY !== 'false';
 
 const lect = JSON.parse(readFileSync('data/lectionary.json', 'utf8'));

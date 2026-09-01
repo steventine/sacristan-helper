@@ -16,7 +16,7 @@ There is no backend and no runtime dependency on any third party. A build step
 produces a single static `readings.json`; the page is plain HTML and JavaScript.
 
 ```
-data/source/*.html      vendored US Lectionary index tables
+data/source/*.html      upstream US Lectionary tables (not committed; npm run fetch-source)
    |  scripts/build-lectionary.mjs
 data/lectionary.json    citations + Lectionary numbers, keyed by liturgical day
    |  scripts/generate.mjs   (joined against the romcal calendar)
@@ -33,14 +33,29 @@ contains no scripture citations, so the lectionary table supplies those.
 
 ```bash
 npm install
-npm run build
+npm run build      # generate + verify; needs no network
 ```
+
+`npm run build` reads the committed `data/lectionary.json` and writes
+`public/readings.json` for a **rolling twenty-year window** starting at the
+current year, so every build extends the range and the data never runs out.
 
 Options:
 
 ```bash
 FIRST_YEAR=2026 LAST_YEAR=2045 npm run generate
 ASCENSION_ON_SUNDAY=false npm run generate   # provinces that keep Ascension on Thursday
+```
+
+### Rebuilding the lectionary table
+
+`data/lectionary.json` rarely changes — it is the Order of Readings, which is
+fixed. The upstream tables it derives from are **not** committed, so if you ever
+need to rebuild it:
+
+```bash
+npm run fetch-source   # re-downloads the tables into data/source/
+npm run lectionary     # rebuilds data/lectionary.json
 ```
 
 `npm run verify` checks that every record resolved, that Sundays have a Gospel
@@ -86,19 +101,30 @@ next online visit automatically** — no version bump, no cache busting. The
 `VERSION` constant in `sw.js` exists only to purge old caches if the caching
 logic itself changes.
 
-Service workers require HTTPS (or localhost). Registration failure is silent and
-the page still works online.
+Service workers require HTTPS (or localhost). GitHub Pages serves HTTPS, so
+registration works. Failure is silent and the page still works online.
+
+One caveat on GitHub Pages: it sets `Cache-Control: max-age=600` and the header
+cannot be overridden, so the worker's `fetch` may be answered from the browser's
+own HTTP cache for up to ten minutes after a deploy. On a page opened once a week
+that is immaterial, but it is why a redeploy may not appear instantly.
 
 ## Deploy
 
-`public/` is a static directory — upload it anywhere.
+Pushing to `main` deploys to GitHub Pages via
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). The workflow
+runs `npm run build`, which regenerates the readings and runs every check —
+**if verification fails, nothing is published.** Pull requests build and verify
+but never deploy.
 
-```bash
-npx wrangler pages deploy public --project-name sacristan-helper
-```
+One-time setup: repository **Settings → Pages → Source → GitHub Actions**.
 
-Re-run `npm run build` and redeploy when the date range needs extending. Nothing
-expires in the meantime: readings for a given date never change.
+`public/` is a plain static directory, so it can be hosted anywhere else without
+changes. All paths are relative, which means it works from a subdirectory
+(`/sacristan-helper/`) as happily as from a domain root — including the service
+worker's scope.
+
+Nothing expires between deploys: the readings for a given date never change.
 
 ## Things to check before relying on it
 
