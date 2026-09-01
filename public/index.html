@@ -92,7 +92,9 @@
   .check input { width: 1.15rem; height: 1.15rem; accent-color: var(--ok); }
   a.verify { font-size: .87rem; color: var(--accent); text-decoration: none; border-bottom: 1px solid currentColor; }
 
-  .meta { text-align: center; font-size: .78rem; color: var(--muted); margin-top: 1.5rem; line-height: 1.6; }
+  .meta { text-align: center; font-size: .78rem; color: var(--muted); margin-top: 1.5rem; line-height: 1.9; }
+  .meta a { color: inherit; text-decoration: underline; text-underline-offset: .18em; }
+  .meta a:active { color: var(--accent); }
   .err { background: var(--accent-soft); border: 1px solid var(--accent); padding: 1rem; border-radius: .6rem; }
 </style>
 </head>
@@ -133,6 +135,15 @@ let DATA = null;
 let sunday = currentSetupSunday();
 
 const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+const SOURCES = {
+  romcal: 'https://github.com/romcal/romcal',
+  lectionary: 'https://catholic-resources.org/Lectionary/',
+  usccb: 'https://bible.usccb.org/',
+  repo: 'https://github.com/steventine/sacristan-helper',
+};
+const link = (href, text) =>
+  '<a href="' + href + '" target="_blank" rel="noopener">' + esc(text) + '</a>';
 
 // A citation list renders its first entry large; genuine alternatives follow.
 function citationHtml(list) {
@@ -202,8 +213,10 @@ function render() {
 
   document.getElementById('meta').innerHTML =
     'Readings ' + DATA.firstYear + '–' + DATA.lastYear + ' · built ' + DATA.built.slice(0, 10) +
-    '<br>Calendar by romcal · citations from ' + esc(DATA.lectionarySource) +
-    '<br>Always confirm against the USCCB page before Mass.';
+    '<br>Calendar by ' + link(SOURCES.romcal, 'romcal') +
+    ' · citations from ' + link(SOURCES.lectionary, 'catholic-resources.org') +
+    '<br>Always confirm against the ' + link(SOURCES.usccb, 'USCCB') + ' page before Mass.' +
+    '<br>' + link(SOURCES.repo, 'Source on GitHub');
 }
 
 document.getElementById('prev').onclick = () => { sunday = addDays(sunday, -7); render(); };
