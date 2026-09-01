@@ -2,9 +2,9 @@
 
 A one-screen phone page for setting the books after Sunday Mass:
 
-1. **Sunday Book of the Gospels** — advance the bookmark to next Sunday's Gospel
-2. **Weekday Lectionary** — open to Monday's first reading
-3. **Weekday Book of the Gospels** — open to Monday's Gospel
+1. **Next Sunday Book of the Gospels** — advance the bookmark to next Sunday's Gospel
+2. **Weekday Book of the Gospels** — open to Monday's Gospel
+3. **Weekday Lectionary** — open to Monday's first reading
 
 Each card shows the citation in large type, the Lectionary number underneath, a
 "Done" checkbox, and a link to the USCCB page for that date so the sacristan can

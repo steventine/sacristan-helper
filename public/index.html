@@ -161,12 +161,13 @@ function flagsFor(rec) {
   return out.map((t) => '<div class="flag">' + t + '</div>').join('');
 }
 
-function card(n, step, action, iso, rec, slot) {
+// `id` keys the saved "Done" state, so renumbering the cards never scrambles it.
+function card(id, n, step, action, iso, rec, slot) {
   if (!rec) {
     return '<section class="card"><div class="step"><span class="num">' + n + '</span>' + step + '</div>' +
       '<div class="err">No data for ' + esc(iso) + '. Regenerate readings.json for this year.</div></section>';
   }
-  const key = sunday + ':' + n;
+  const key = sunday + ':' + id;
   const done = localStorage.getItem(key) === '1';
   return '<section class="card' + (done ? ' done' : '') + '" data-key="' + key + '">' +
     '<div class="step"><span class="num">' + n + '</span>' + step + '</div>' +
@@ -186,9 +187,9 @@ function render() {
   const s = DATA.days[nextSunday];
   const m = DATA.days[monday];
   document.getElementById('cards').innerHTML =
-    card(1, 'Sunday Book of the Gospels', 'Advance the bookmark to', nextSunday, s, 'gospel') +
-    card(2, 'Weekday Lectionary', 'Open to the first reading for', monday, m, 'first') +
-    card(3, 'Weekday Book of the Gospels', 'Open to the Gospel for', monday, m, 'gospel');
+    card('sunday-gospels', 1, 'Next Sunday Book of the Gospels', 'Advance the bookmark to', nextSunday, s, 'gospel') +
+    card('weekday-gospels', 2, 'Weekday Book of the Gospels', 'Open to the Gospel for', monday, m, 'gospel') +
+    card('weekday-lectionary', 3, 'Weekday Lectionary', 'Open to the first reading for', monday, m, 'first');
 
   document.querySelectorAll('.card').forEach((el) => {
     const box = el.querySelector('input');
