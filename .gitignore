@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Logs and local env
+*.log
+npm-debug.log*
+.env
+.env.local
+
+# Deploy tooling
+.wrangler/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local Claude Code overrides (.claude/launch.json is shared on purpose)
+.claude/settings.local.json
+
+# NOTE: data/lectionary.json and public/readings.json are build outputs but are
+# deliberately committed. public/ is the deployable artifact, so keeping them in
+# the repo means `wrangler pages deploy public` works on a fresh clone with no
+# build step. Regenerate them with `npm run build`.

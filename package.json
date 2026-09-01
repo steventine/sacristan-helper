@@ -1,0 +1,20 @@
+{
+  "name": "sacristan-helper",
+  "version": "1.0.0",
+  "description": "Post-Mass book-setting helper for the sacristan",
+  "main": "index.js",
+  "scripts": {
+    "lectionary": "node scripts/build-lectionary.mjs",
+    "generate": "node scripts/generate.mjs",
+    "verify": "node scripts/verify.mjs",
+    "build": "npm run lectionary && npm run generate && npm run verify"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "romcal": "^3.0.0"
+  },
+  "private": "true"
+}

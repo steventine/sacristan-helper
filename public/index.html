@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b2a4a">
+<title>Sacristan Helper</title>
+<style>
+  :root {
+    --bg: #f4f2ee;
+    --card: #ffffff;
+    --ink: #16181d;
+    --muted: #5d6470;
+    --rule: #ddd8d0;
+    --accent: #7a1420;
+    --accent-soft: #f6e9ea;
+    --flag: #8a5a00;
+    --flag-soft: #fdf3dd;
+    --ok: #1c6b3f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a;
+      --card: #1d2026;
+      --ink: #eceef2;
+      --muted: #9aa2af;
+      --rule: #333842;
+      --accent: #e8909b;
+      --accent-soft: #2b1c20;
+      --flag: #e8b75c;
+      --flag-soft: #2c2417;
+      --ok: #6cc394;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0 1rem 3rem;
+    background: var(--bg); color: var(--ink);
+    font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  main { max-width: 34rem; margin: 0 auto; }
+
+  header { padding: 1.25rem 0 .75rem; }
+  h1 { margin: 0 0 .15rem; font-size: 1rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .setup { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
+  .setup strong { font-size: 1.35rem; }
+  nav { display: flex; gap: .5rem; margin-top: .75rem; }
+  nav button {
+    flex: 1; padding: .6rem; font-size: .95rem; font-family: inherit;
+    background: var(--card); color: var(--ink);
+    border: 1px solid var(--rule); border-radius: .5rem; cursor: pointer;
+  }
+  nav button:active { background: var(--accent-soft); }
+
+  .card {
+    background: var(--card); border: 1px solid var(--rule);
+    border-radius: .85rem; padding: 1rem 1.1rem 1.15rem; margin-bottom: 1rem;
+  }
+  .card.done { opacity: .55; }
+  .step {
+    display: flex; align-items: center; gap: .55rem;
+    font-size: .78rem; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: .1rem;
+  }
+  .num {
+    flex: none; width: 1.5rem; height: 1.5rem; border-radius: 50%;
+    background: var(--accent); color: var(--card);
+    display: grid; place-items: center; font-size: .85rem;
+  }
+  .action { font-size: .95rem; color: var(--muted); margin: .45rem 0 .1rem; }
+  .day { font-size: 1.02rem; font-weight: 600; margin-bottom: .5rem; }
+  .day .date { color: var(--muted); font-weight: 400; }
+
+  .citation {
+    font-size: 2rem; line-height: 1.15; font-weight: 700;
+    letter-spacing: -.01em; margin: .1rem 0 .35rem; word-break: break-word;
+  }
+  .citation .alt { display: block; font-size: 1.35rem; font-weight: 600; color: var(--muted); margin-top: .2rem; }
+  .lec { font-size: .9rem; color: var(--muted); }
+  .lec b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  .flag {
+    background: var(--flag-soft); border-left: 3px solid var(--flag);
+    padding: .55rem .7rem; border-radius: .3rem; font-size: .87rem;
+    margin-top: .75rem; color: var(--ink);
+  }
+  .flag b { color: var(--flag); }
+
+  footer { margin-top: .5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+  .check { display: flex; align-items: center; gap: .45rem; font-size: .92rem; cursor: pointer; user-select: none; }
+  .check input { width: 1.15rem; height: 1.15rem; accent-color: var(--ok); }
+  a.verify { font-size: .87rem; color: var(--accent); text-decoration: none; border-bottom: 1px solid currentColor; }
+
+  .meta { text-align: center; font-size: .78rem; color: var(--muted); margin-top: 1.5rem; line-height: 1.6; }
+  .err { background: var(--accent-soft); border: 1px solid var(--accent); padding: 1rem; border-radius: .6rem; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>After Sunday Mass</h1>
+    <div class="setup">Setting the books after <strong id="setup-sunday">…</strong></div>
+    <nav>
+      <button id="prev" type="button">‹ Previous</button>
+      <button id="today" type="button">This week</button>
+      <button id="next" type="button">Next ›</button>
+    </nav>
+  </header>
+
+  <div id="cards"></div>
+  <p class="meta" id="meta"></p>
+</main>
+
+<script>
+const TZ = 'America/New_York';
+const ISO = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
+const LONG = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric' });
+
+const todayISO = () => ISO.format(new Date());
+const toUTC = (iso) => new Date(iso + 'T12:00:00Z');
+const addDays = (iso, n) => { const d = toUTC(iso); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const dow = (iso) => toUTC(iso).getUTCDay();
+const pretty = (iso) => LONG.format(toUTC(iso));
+
+// The Sunday whose Mass has just ended: today when it is Sunday, else the one coming up.
+function currentSetupSunday() {
+  const t = todayISO();
+  return dow(t) === 0 ? t : addDays(t, (7 - dow(t)) % 7);
+}
+
+let DATA = null;
+let sunday = currentSetupSunday();
+
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+// A citation list renders its first entry large; genuine alternatives follow.
+function citationHtml(list) {
+  if (!list || !list.length) return '<div class="citation">—</div>';
+  const [main, ...rest] = list;
+  return '<div class="citation">' + esc(main.citation) +
+    rest.map((r) => '<span class="alt">or ' + esc(r.citation) + '</span>').join('') + '</div>';
+}
+
+function lecHtml(rec) {
+  return rec.lectionary ? '<div class="lec">Lectionary <b>' + esc(rec.lectionary) + '</b></div>' : '';
+}
+
+function flagsFor(rec) {
+  const out = [];
+  if (rec.unverified)
+    out.push('<b>Not resolved.</b> Check the USCCB page before setting this book.');
+  if (rec.properOption)
+    out.push('<b>Celebrant’s choice.</b> Today’s memorial (' + esc(rec.properOption.label.split(' + ')[0]) +
+      ') may instead use its own readings. Confirm before setting.');
+  if (rec.firstFromFerial)
+    out.push('<b>Note.</b> The Gospel is proper to the feast; the first reading shown is the weekday one.');
+  if (rec.optionalMemorials && rec.optionalMemorials.length)
+    out.push('<b>Optional memorial:</b> ' + rec.optionalMemorials.map(esc).join(', ') +
+      '. Ferial readings are shown unless the celebrant chooses otherwise.');
+  return out.map((t) => '<div class="flag">' + t + '</div>').join('');
+}
+
+function card(n, step, action, iso, rec, slot) {
+  if (!rec) {
+    return '<section class="card"><div class="step"><span class="num">' + n + '</span>' + step + '</div>' +
+      '<div class="err">No data for ' + esc(iso) + '. Regenerate readings.json for this year.</div></section>';
+  }
+  const key = sunday + ':' + n;
+  const done = localStorage.getItem(key) === '1';
+  return '<section class="card' + (done ? ' done' : '') + '" data-key="' + key + '">' +
+    '<div class="step"><span class="num">' + n + '</span>' + step + '</div>' +
+    '<div class="action">' + action + '</div>' +
+    '<div class="day">' + esc(rec.title) + ' <span class="date">· ' + pretty(iso) + '</span></div>' +
+    citationHtml(rec[slot]) + lecHtml(rec) + flagsFor(rec) +
+    '<footer><label class="check"><input type="checkbox"' + (done ? ' checked' : '') + '> Done</label>' +
+    '<a class="verify" href="' + rec.usccb + '" target="_blank" rel="noopener">Verify on USCCB</a></footer>' +
+    '</section>';
+}
+
+function render() {
+  const nextSunday = addDays(sunday, 7);
+  const monday = addDays(sunday, 1);
+  document.getElementById('setup-sunday').textContent = pretty(sunday);
+
+  const s = DATA.days[nextSunday];
+  const m = DATA.days[monday];
+  document.getElementById('cards').innerHTML =
+    card(1, 'Sunday Book of the Gospels', 'Advance the bookmark to', nextSunday, s, 'gospel') +
+    card(2, 'Weekday Lectionary', 'Open to the first reading for', monday, m, 'first') +
+    card(3, 'Weekday Book of the Gospels', 'Open to the Gospel for', monday, m, 'gospel');
+
+  document.querySelectorAll('.card').forEach((el) => {
+    const box = el.querySelector('input');
+    if (!box) return;
+    box.addEventListener('change', () => {
+      localStorage.setItem(el.dataset.key, box.checked ? '1' : '0');
+      el.classList.toggle('done', box.checked);
+    });
+  });
+
+  document.getElementById('meta').innerHTML =
+    'Readings ' + DATA.firstYear + '–' + DATA.lastYear + ' · built ' + DATA.built.slice(0, 10) +
+    '<br>Calendar by romcal · citations from ' + esc(DATA.lectionarySource) +
+    '<br>Always confirm against the USCCB page before Mass.';
+}
+
+document.getElementById('prev').onclick = () => { sunday = addDays(sunday, -7); render(); };
+document.getElementById('next').onclick = () => { sunday = addDays(sunday, 7); render(); };
+document.getElementById('today').onclick = () => { sunday = currentSetupSunday(); render(); };
+
+if ('serviceWorker' in navigator) {
+  // Registration only works over HTTPS (or localhost); it is a progressive
+  // enhancement, so any failure is silent and the page still works online.
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+
+fetch('readings.json')
+  .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then((d) => {
+    DATA = d;
+    try { localStorage.setItem('cache', JSON.stringify(d)); } catch (e) { /* quota or private mode */ }
+    render();
+  })
+  .catch(() => {
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem('cache')); } catch (e) { /* ignore */ }
+    if (cached) { DATA = cached; render(); }
+    else document.getElementById('cards').innerHTML =
+      '<div class="card"><div class="err">Could not load readings, and nothing is cached on this device. ' +
+      'Connect to the network once and reload.</div></div>';
+  });
+</script>
+</body>
+</html>

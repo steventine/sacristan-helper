@@ -1,0 +1,3 @@
+# Optional: only needed for scripts/spot_check.py, which cross-checks the
+# generated readings against bible.usccb.org.
+catholic-mass-readings>=0.7.4
