@@ -31,11 +31,12 @@ for (const [iso, r] of Object.entries(days)) {
 }
 console.log('  checked ' + checked + ' ferial Ordinary Time Mondays');
 
-console.log('\n3. Sundays have a Gospel; Mondays have a first reading and a Gospel');
+console.log('\n3. Sundays and Mondays each have a first reading and a Gospel');
 for (const [iso, r] of Object.entries(days)) {
   const isSunday = new Date(iso + 'T12:00:00Z').getUTCDay() === 0;
   if (isSunday) {
     if (!r.gospel || !r.gospel.length) fail(iso + ' Sunday has no Gospel (' + r.title + ')');
+    if (!r.first || !r.first.length) fail(iso + ' Sunday has no first reading (' + r.title + ')');
   } else {
     if (!r.gospel || !r.gospel.length) fail(iso + ' Monday has no Gospel (' + r.title + ')');
     if (!r.first || !r.first.length) fail(iso + ' Monday has no first reading (' + r.title + ')');

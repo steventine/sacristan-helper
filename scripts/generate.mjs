@@ -167,6 +167,29 @@ function mergeVariants(bucket, base, cycle) {
   return Object.keys(merged).length ? { key: sources.join(' + '), ...merged } : null;
 }
 
+// The Sunday table files readings from Acts under "New Testament", so in Easter
+// time the true first reading sits in `second` ahead of the epistle - and on
+// Easter Sunday it sits on a sibling row without the "(opt. 1)" suffix. When a
+// day has no first reading, take it from Acts. Days that already have one are
+// left alone: on the Baptism of the Lord, Acts 10 really is the second reading.
+const isActs = (e) => /^Acts\b/.test(e.citation);
+
+function promoteActs(readings, label, cycle) {
+  if (!readings || (readings.first && readings.first.length)) return readings;
+  const second = readings.second || [];
+  let acts = second.filter(isActs);
+  const rest = second.filter((e) => !isActs(e));
+  if (!acts.length && label) {
+    const base = label.replace(/\s*\((?:opt|option)\.?[^)]*\)\s*$/i, '');
+    const sibling = lect.sundays[base + '|' + cycle];
+    acts = ((sibling && sibling.second) || []).filter(isActs);
+  }
+  if (!acts.length) return readings;
+  const out = { ...readings, first: acts };
+  if (rest.length) out.second = rest; else delete out.second;
+  return out;
+}
+
 // ------------------------------------------------------------------ titles
 // The national calendar bundles are an abandoned alpha and will not load
 // against romcal 3.x, so day names are composed here instead. The wording
@@ -198,7 +221,14 @@ const TITLE_OVERRIDES = {
   monday_after_epiphany: 'Monday after Epiphany',
   mary_mother_of_the_church: 'Blessed Virgin Mary, Mother of the Church',
   advent_december_24: 'December 24 (morning Mass)',
+  commemoration_of_all_the_faithful_departed: 'All Souls',
 };
+
+// Days whose readings are a menu the celebrant picks from. All Souls offers a
+// dozen Gospels and many first readings under one Lectionary number, and the
+// source table lacks its Old Testament options, so any single citation would be
+// a guess. Point the sacristan at the section instead.
+const CELEBRANT_CHOICE = { commemoration_of_all_the_faithful_departed: '668' };
 
 // "3rd Sunday in Ordinary Time" -> "Third Sunday in Ordinary Time", so titles
 // taken from table labels match the ones composed here.
@@ -276,6 +306,15 @@ for (let y = FIRST_YEAR; y <= LAST_YEAR; y++) {
       }
     }
 
+    readings = promoteActs(readings, label, sundayCycle);
+
+    const menu = CELEBRANT_CHOICE[day.id];
+    if (menu) {
+      const pointer = [{ citation: 'Options at #' + menu, lectionary: menu }];
+      readings = { first: pointer, gospel: pointer };
+      source = 'proper';
+    }
+
     if (!complete(readings) && dow === 1) {
       // Memorials keep the ferial readings unless the celebrant chooses propers.
       // A proper Gospel with no proper first reading also falls back here.
@@ -320,6 +359,7 @@ for (let y = FIRST_YEAR; y <= LAST_YEAR; y++) {
     }
     const optional = entries.slice(1).map((e) => humanize(e.id));
     if (optional.length) rec.optionalMemorials = optional;
+    if (menu) rec.celebrantChoice = true;
 
     days[iso] = rec;
   }

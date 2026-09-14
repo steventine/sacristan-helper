@@ -4,7 +4,8 @@ A one-screen phone page for setting the books after Sunday Mass:
 
 1. **Next Sunday Book of the Gospels** — advance the bookmark to next Sunday's Gospel
 2. **Weekday Book of the Gospels** — open to Monday's Gospel
-3. **Weekday Lectionary** — open to Monday's first reading
+3. **Next Sunday Lectionary** — advance the bookmark to next Sunday's first reading
+4. **Weekday Lectionary** — open to Monday's first reading
 
 Each card shows the citation in large type, the Lectionary number underneath, a
 "Done" checkbox, and a link to the USCCB page for that date so the sacristan can
@@ -58,8 +59,8 @@ npm run fetch-source   # re-downloads the tables into data/source/
 npm run lectionary     # rebuilds data/lectionary.json
 ```
 
-`npm run verify` checks that every record resolved, that Sundays have a Gospel
-and Mondays have both readings, and that ferial Ordinary Time Monday Lectionary
+`npm run verify` checks that every record resolved, that every Sunday and Monday
+has both a first reading and a Gospel, and that ferial Ordinary Time Monday Lectionary
 numbers match the independent formula `305 + (week − 1) × 6`. It also spot-checks
 two dates against values read off the USCCB site. It needs no network.
 
@@ -130,6 +131,8 @@ Nothing expires between deploys: the readings for a given date never change.
 
 - **Ascension.** Defaults to Sunday. If your province keeps it on Thursday,
   rebuild with `ASCENSION_ON_SUNDAY=false`.
+- **All Souls.** Its readings are a menu under Lectionary 668, so the cards point
+  to that section and flag the choice rather than naming one citation.
 - **Optional memorials.** The ferial readings are shown, with the memorial named
   in a flag. The celebrant may choose the memorial's proper readings instead.
 - **Diocesan propers.** The build uses the General Roman Calendar plus a small US

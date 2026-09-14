@@ -58,6 +58,7 @@
     border-radius: .85rem; padding: 1rem 1.1rem 1.15rem; margin-bottom: 1rem;
   }
   .card.done { opacity: .55; }
+  .divider { border: 0; border-top: 3px solid var(--muted); margin: 1.75rem 0; }
   .step {
     display: flex; align-items: center; gap: .55rem;
     font-size: .78rem; font-weight: 700; letter-spacing: .1em;
@@ -77,6 +78,7 @@
     letter-spacing: -.01em; margin: .1rem 0 .35rem; word-break: break-word;
   }
   .citation .alt { display: block; font-size: 1.35rem; font-weight: 600; color: var(--muted); margin-top: .2rem; }
+  .also { font-size: .95rem; color: var(--muted); margin: -.15rem 0 .3rem; }
   .lec { font-size: .9rem; color: var(--muted); }
   .lec b { color: var(--ink); font-variant-numeric: tabular-nums; }
 
@@ -167,6 +169,9 @@ function flagsFor(rec) {
   const out = [];
   if (rec.unverified)
     out.push('<b>Not resolved.</b> Check the USCCB page before setting this book.');
+  if (rec.celebrantChoice)
+    out.push('<b>Celebrant’s choice.</b> This day offers many readings under Lectionary ' +
+      esc(rec.lectionary) + '. Open to that section and confirm which were chosen.');
   if (rec.properOption)
     out.push('<b>Celebrant’s choice.</b> Today’s memorial (' + esc(rec.properOption.label.split(' + ')[0]) +
       ') may instead use its own readings. Confirm before setting.');
@@ -178,8 +183,15 @@ function flagsFor(rec) {
   return out.map((t) => '<div class="flag">' + t + '</div>').join('');
 }
 
+// Secondary readings shown under the main citation, e.g. the second reading on
+// the Sunday Lectionary card, so the whole bookmarked section can be checked.
+function alsoHtml(label, list) {
+  if (!list || !list.length) return '';
+  return '<div class="also">' + label + ': ' + list.map((r) => esc(r.citation)).join(' or ') + '</div>';
+}
+
 // `id` keys the saved "Done" state, so renumbering the cards never scrambles it.
-function card(id, n, step, action, iso, rec, slot) {
+function card(id, n, step, action, iso, rec, slot, extra) {
   if (!rec) {
     return '<section class="card"><div class="step"><span class="num">' + n + '</span>' + step + '</div>' +
       '<div class="err">No data for ' + esc(iso) + '. Regenerate readings.json for this year.</div></section>';
@@ -190,7 +202,7 @@ function card(id, n, step, action, iso, rec, slot) {
     '<div class="step"><span class="num">' + n + '</span>' + step + '</div>' +
     '<div class="action">' + action + '</div>' +
     '<div class="day">' + esc(rec.title) + ' <span class="date">· ' + pretty(iso) + '</span></div>' +
-    citationHtml(rec[slot]) + lecHtml(rec) + flagsFor(rec) +
+    citationHtml(rec[slot]) + (extra ? extra(rec) : '') + lecHtml(rec) + flagsFor(rec) +
     '<footer><label class="check"><input type="checkbox"' + (done ? ' checked' : '') + '> Done</label>' +
     '<a class="verify" href="' + rec.usccb + '" target="_blank" rel="noopener">Verify on USCCB</a></footer>' +
     '</section>';
@@ -206,7 +218,11 @@ function render() {
   document.getElementById('cards').innerHTML =
     card('sunday-gospels', 1, 'Next Sunday Book of the Gospels', 'Advance the bookmark to', nextSunday, s, 'gospel') +
     card('weekday-gospels', 2, 'Weekday Book of the Gospels', 'Open to the Gospel for', monday, m, 'gospel') +
-    card('weekday-lectionary', 3, 'Weekday Lectionary', 'Open to the first reading for', monday, m, 'first');
+    // The Gospel books and the Lectionaries sit on opposite sides of the church.
+    '<hr class="divider">' +
+    card('sunday-lectionary', 3, 'Next Sunday Lectionary', 'Advance the bookmark to', nextSunday, s, 'first',
+      (rec) => alsoHtml('Second reading', rec.second)) +
+    card('weekday-lectionary', 4, 'Weekday Lectionary', 'Open to the first reading for', monday, m, 'first');
 
   document.querySelectorAll('.card').forEach((el) => {
     const box = el.querySelector('input');
