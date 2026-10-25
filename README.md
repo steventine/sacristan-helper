@@ -60,9 +60,30 @@ npm run lectionary     # rebuilds data/lectionary.json
 ```
 
 `npm run verify` checks that every record resolved, that every Sunday and Monday
-has both a first reading and a Gospel, and that ferial Ordinary Time Monday Lectionary
-numbers match the independent formula `305 + (week − 1) × 6`. It also spot-checks
-two dates against values read off the USCCB site. It needs no network.
+has both a first reading and a Gospel, that ferial Ordinary Time Monday Lectionary
+numbers match the independent formula `305 + (week − 1) × 6`, and that no record's
+first reading merely repeats its second — the signature of a bad join on the
+solemnities whose Old Testament reading sits on a `(1st reading)` row of its own.
+It also spot-checks five dates against values read off the USCCB site. It needs no
+network.
+
+## Viewing it locally
+
+The page fetches `readings.json`, so it needs to be served rather than opened as
+a `file://` URL. Any static server will do:
+
+```bash
+python -m http.server 8787 --directory public
+```
+
+Then open <http://localhost:8787>. Serving over localhost also satisfies the
+service worker's secure-context requirement, so the offline path is exercised
+too.
+
+The cards always open on the setup Sunday for today's date; use the
+**Previous** / **Next** buttons to step a week at a time rather than changing
+the system clock. "Done" ticks are keyed by Sunday in `localStorage`, so they
+survive a reload and do not leak between weeks.
 
 ## Cross-checking against USCCB
 

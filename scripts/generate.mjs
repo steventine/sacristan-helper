@@ -60,6 +60,15 @@ function score(cand) {
   return s;
 }
 
+// Three-reading feasts put their Old Testament reading on a row of its own,
+// suffixed "(1st reading)" - "Nov 1: All Saints (1st reading)" holds Rev 7
+// while "Nov 1: All Saints" holds the epistle and the Gospel. The base row
+// files that epistle in whichever column the table has (the Sunday table has
+// no Old Testament column, so both rows land in `second`), which is why the
+// split row has to win the first slot outright rather than merge by score.
+const SPLIT_FIRST = /\(1st reading\)\s*$/i;
+const soleReading = (c) => c.readings.first || c.readings.second || c.readings.gospel;
+
 // A single celebration's readings are often split across sibling rows -
 // "Sept 8: Nativity of the BVMary (option 1)" holds the first reading while
 // "Sept 8: Nativity of the BVMary" holds the Gospel. Merge them per slot,
@@ -71,14 +80,30 @@ function feastByDate(iso, cycle, need) {
     .sort((a, b) => score(a) - score(b));
   if (!pool.length) return null;
 
+  const split = pool.find((c) => SPLIT_FIRST.test(c.label));
+  const rest = pool.filter((c) => !SPLIT_FIRST.test(c.label));
+
   const merged = {};
   const sources = [];
+  const take = (slot, cand, entries) => {
+    merged[slot] = entries;
+    if (!sources.includes(cand.label)) sources.push(cand.label);
+  };
+
   for (const slot of ['first', 'second', 'gospel']) {
-    const hit = pool.find((c) => c.readings[slot]);
-    if (!hit) continue;
-    merged[slot] = hit.readings[slot];
-    if (!sources.includes(hit.label)) sources.push(hit.label);
+    // With a split row in play the base rows hold the second reading, under
+    // whichever column they used, and never the first.
+    if (split && slot === 'first') continue;
+    if (split && slot === 'second') {
+      const hit = rest.find((c) => c.readings.second) || rest.find((c) => c.readings.first);
+      if (hit) take(slot, hit, hit.readings.second || hit.readings.first);
+      continue;
+    }
+    const hit = rest.find((c) => c.readings[slot]);
+    if (hit) take(slot, hit, hit.readings[slot]);
   }
+  if (split) take('first', split, soleReading(split));
+
   if (!need.every((slot) => merged[slot])) return null;
   return { key: sources.join(' + '), ...merged };
 }

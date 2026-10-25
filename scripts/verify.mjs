@@ -9,9 +9,14 @@ let failures = 0;
 const fail = (msg) => { console.log('  FAIL ' + msg); failures++; };
 
 // Known-good values read off the USCCB page for that date.
+// Solemnities whose Old Testament reading sits on a "(1st reading)" row of its
+// own are here because an earlier join duplicated the epistle into both slots.
 const KNOWN = {
   '2026-08-31': { lectionary: '431', first: '1 Cor 2:1-5', gospel: 'Luke 4:16-30' },
   '2026-08-30': { lectionary: '124', gospel: 'Matt 16:21-27' },
+  '2026-11-01': { lectionary: '667', first: 'Rev 7:2-4, 9-14', second: '1 John 3:1-3', gospel: 'Matt 5:1-12a' },
+  '2026-06-29': { lectionary: '591', first: 'Acts 12:1-11', second: '2 Tim 4:6-8, 17-18', gospel: 'Matt 16:13-19' },
+  '2027-08-15': { lectionary: '622', first: 'Rev 11:19a; 12:1-6a, 10ab', second: '1 Cor 15:20-27', gospel: 'Luke 1:39-56' },
 };
 
 console.log('records: ' + Object.keys(days).length + '  (' + data.firstYear + '-' + data.lastYear + ')');
@@ -48,7 +53,12 @@ console.log('\n4. spot checks against USCCB');
 for (const [iso, want] of Object.entries(KNOWN)) {
   const r = days[iso];
   if (!r) { fail(iso + ' missing'); continue; }
-  const got = { lectionary: r.lectionary, first: r.first && r.first[0].citation, gospel: r.gospel && r.gospel[0].citation };
+  const got = {
+    lectionary: r.lectionary,
+    first: r.first && r.first[0].citation,
+    second: r.second && r.second[0].citation,
+    gospel: r.gospel && r.gospel[0].citation,
+  };
   for (const k of Object.keys(want)) {
     if (got[k] !== want[k]) fail(iso + ' ' + k + ': got "' + got[k] + '", want "' + want[k] + '"');
   }
@@ -56,7 +66,18 @@ for (const [iso, want] of Object.entries(KNOWN)) {
   console.log('      Lectionary ' + r.lectionary + ' | first: ' + got.first + ' | gospel: ' + got.gospel);
 }
 
-console.log('\n5. cycle rotation is sane');
+console.log('\n5. no first reading merely repeats the second');
+let dupes = 0;
+for (const [iso, r] of Object.entries(days)) {
+  if (!r.first || !r.second) continue;
+  if (r.first[0].citation === r.second[0].citation) {
+    fail(iso + ' ' + r.title + ': first and second are both ' + r.first[0].citation);
+    dupes++;
+  }
+}
+if (!dupes) console.log('  ok');
+
+console.log('\n6. cycle rotation is sane');
 const sundayCycles = {}, weekdayCycles = {};
 for (const [iso, r] of Object.entries(days)) {
   const isSunday = new Date(iso + 'T12:00:00Z').getUTCDay() === 0;
