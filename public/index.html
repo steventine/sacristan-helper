@@ -216,13 +216,13 @@ function render() {
   const s = DATA.days[nextSunday];
   const m = DATA.days[monday];
   document.getElementById('cards').innerHTML =
-    card('sunday-gospels', 1, 'Next Sunday Book of the Gospels', 'Advance the bookmark to', nextSunday, s, 'gospel') +
-    card('weekday-gospels', 2, 'Weekday Book of the Gospels', 'Open to the Gospel for', monday, m, 'gospel') +
+    card('sunday-lectionary', 1, 'Next Sunday Lectionary', 'Advance the bookmark to', nextSunday, s, 'first',
+      (rec) => alsoHtml('Second reading', rec.second)) +
+    card('weekday-lectionary', 2, 'Weekday Lectionary', 'Open to the first reading for', monday, m, 'first') +
     // The Gospel books and the Lectionaries sit on opposite sides of the church.
     '<hr class="divider">' +
-    card('sunday-lectionary', 3, 'Next Sunday Lectionary', 'Advance the bookmark to', nextSunday, s, 'first',
-      (rec) => alsoHtml('Second reading', rec.second)) +
-    card('weekday-lectionary', 4, 'Weekday Lectionary', 'Open to the first reading for', monday, m, 'first');
+    card('sunday-gospels', 3, 'Next Sunday Book of the Gospels', 'Advance the bookmark to', nextSunday, s, 'gospel') +
+    card('weekday-gospels', 4, 'Weekday Book of the Gospels', 'Open to the Gospel for', monday, m, 'gospel');
 
   document.querySelectorAll('.card').forEach((el) => {
     const box = el.querySelector('input');
